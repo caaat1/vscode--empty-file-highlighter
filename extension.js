@@ -1,5 +1,4 @@
 const vscode = require('vscode');
-const fs = require('node:fs');
 
 const BATCH_DELAY_MS = 100;
 
@@ -41,15 +40,17 @@ class EmptyFileDecorationProvider {
 		this._onDidChangeFileDecorations.fire(uris);
 	}
 
-	provideFileDecoration(uri) {
-		if (uri.scheme !== 'file') return undefined;
+	async provideFileDecoration(uri) {
+		// Decorations are asked for every URI VS Code shows (Git diffs,
+		// untitled editors, output channels…); stat only those with a file
+		// system provider behind them.
+		if (vscode.workspace.fs.isWritableFileSystem(uri.scheme) === undefined) {
+			return undefined;
+		}
 
 		try {
-			const filePath = uri.fsPath;
-			if (!fs.existsSync(filePath)) return undefined;
-
-			const stats = fs.statSync(filePath);
-			if (stats.isDirectory()) return undefined;
+			const stats = await vscode.workspace.fs.stat(uri);
+			if ((stats.type & vscode.FileType.File) === 0) return undefined;
 
 			const isFileEmpty = stats.size === 0;
 
@@ -72,6 +73,10 @@ class EmptyFileDecorationProvider {
 			return undefined;
 
 		} catch (error) {
+			// A file deleted between the event and this query is no error.
+			if (error instanceof vscode.FileSystemError && error.code === 'FileNotFound') {
+				return undefined;
+			}
 			console.error(`[Empty Files Highlighter Error] ${error.message}`);
 			return undefined;
 		}
