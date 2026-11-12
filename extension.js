@@ -7,8 +7,12 @@ class EmptyFileDecorationProvider {
 		this.onDidChangeFileDecorations = this._onDidChangeFileDecorations.event;
 	}
 
-	refresh() {
-		this._onDidChangeFileDecorations.fire(undefined);
+	/**
+	 * Asks VS Code to query decorations again: for the given URI(s), or for
+	 * every file when called without an argument.
+	 */
+	refresh(uris) {
+		this._onDidChangeFileDecorations.fire(uris);
 	}
 
 	provideFileDecoration(uri) {
@@ -66,6 +70,16 @@ function activate(context) {
 		}
 	});
 	context.subscriptions.push(settingsListener);
+
+	// VS Code caches a decoration per URI until the provider reports a
+	// change, so a file gaining or losing content must be reported here, or
+	// its badge stays as first computed.
+	const watcher = vscode.workspace.createFileSystemWatcher('**/*');
+	const onFileEvent = uri => provider.refresh(uri);
+	watcher.onDidCreate(onFileEvent);
+	watcher.onDidChange(onFileEvent);
+	watcher.onDidDelete(onFileEvent);
+	context.subscriptions.push(watcher);
 }
 
 function deactivate() { }
