@@ -2,8 +2,12 @@
 	"name": "empty-file-highlighter",
 	"displayName": "Empty File Highlighter",
 	"description": "Highlights empty files in the explorer sidebar",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/caaat1/vscode--empty-file-highlighter.git"
+	},
 	"publisher": "TeodorDaraktchiev",
 	"icon": "icon.png",
 	"engines": {
