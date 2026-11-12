@@ -1,0 +1,63 @@
+{
+	"name": "empty-file-highlighter",
+	"displayName": "Empty File Highlighter",
+	"description": "Highlights empty files in the explorer sidebar",
+	"version": "0.0.2",
+	"license": "MIT",
+	"publisher": "TeodorDaraktchiev",
+	"icon": "icon.png",
+	"engines": {
+		"vscode": "^1.80.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"keywords": [
+		"empty",
+		"file size",
+		"explorer",
+		"highlighter"
+	],
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"main": "./extension.js",
+	"contributes": {
+		"decorations": [
+			{
+				"id": "empty-file-highlighter.decorator",
+				"label": "Empty Files Highlighter"
+			}
+		],
+		"configuration": {
+			"title": "Empty Files Highlighter",
+			"properties": {
+				"emptyFiles.badgeStyle": {
+					"type": "string",
+					"default": "∅",
+					"enum": [
+						"∅",
+						"0B",
+						"0b",
+						"◎",
+						"🔹"
+					],
+					"description": "Choose the visual icon style for empty files in the Explorer tree."
+				}
+			}
+		}
+	},
+	"scripts": {
+		"lint": "eslint .",
+		"pretest": "npm run lint",
+		"test": "vscode-test"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.80.0",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "22.x",
+		"eslint": "^9.39.3",
+		"@vscode/test-cli": "^0.0.12",
+		"@vscode/test-electron": "^2.5.2"
+	}
+}
