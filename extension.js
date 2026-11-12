@@ -1,10 +1,36 @@
 const vscode = require('vscode');
 const fs = require('node:fs');
 
+const BATCH_DELAY_MS = 100;
+
 class EmptyFileDecorationProvider {
 	constructor() {
 		this._onDidChangeFileDecorations = new vscode.EventEmitter();
 		this.onDidChangeFileDecorations = this._onDidChangeFileDecorations.event;
+		this._pending = new Map();
+		this._timer = undefined;
+	}
+
+	/**
+	 * Collects a changed URI and reports the whole batch once events pause
+	 * for BATCH_DELAY_MS, so a checkout or a formatter run touching hundreds
+	 * of files causes one refresh, not hundreds.
+	 */
+	schedule(uri) {
+		this._pending.set(uri.toString(), uri);
+		clearTimeout(this._timer);
+		this._timer = setTimeout(() => {
+			const uris = [...this._pending.values()];
+			this._pending.clear();
+			this._timer = undefined;
+			this.refresh(uris);
+		}, BATCH_DELAY_MS);
+	}
+
+	dispose() {
+		clearTimeout(this._timer);
+		this._pending.clear();
+		this._onDidChangeFileDecorations.dispose();
 	}
 
 	/**
@@ -58,7 +84,7 @@ function activate(context) {
 	console.log('✅ [Empty File Highlighter] Extension is now active!');
 
 	const registration = vscode.window.registerFileDecorationProvider(provider);
-	context.subscriptions.push(registration);
+	context.subscriptions.push(registration, provider);
 
 	setTimeout(() => {
 		provider.refresh();
@@ -75,7 +101,7 @@ function activate(context) {
 	// change, so a file gaining or losing content must be reported here, or
 	// its badge stays as first computed.
 	const watcher = vscode.workspace.createFileSystemWatcher('**/*');
-	const onFileEvent = uri => provider.refresh(uri);
+	const onFileEvent = uri => provider.schedule(uri);
 	watcher.onDidCreate(onFileEvent);
 	watcher.onDidChange(onFileEvent);
 	watcher.onDidDelete(onFileEvent);
