@@ -26,6 +26,12 @@
 		"onStartupFinished"
 	],
 	"main": "./extension.js",
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": true
+		},
+		"virtualWorkspaces": true
+	},
 	"contributes": {
 		"decorations": [
 			{
