@@ -18,8 +18,11 @@ You can choose your favorite icon style directly from the VS Code Settings inter
    * `◎` (Bullseye circle)
    * `🔹` (Blue diamond badge)
 
+To also mark files that only *look* empty (a single empty line, spaces, tabs, a byte order mark), turn on **Whitespace Only** (`emptyFiles.whitespaceOnly`). Their tooltip says "holds only whitespace" and gives the size. Files over 64 KiB are not read for this check.
+
 ## 📦 Requirements
 * Visual Studio Code v1.80.0 or newer
+* Works in untrusted (Restricted Mode), remote (WSL) and virtual (GitHub Repositories) workspaces
 
 ## 🐛 Known Issues
 * No known issues so far. Counting on you for the unknowns!

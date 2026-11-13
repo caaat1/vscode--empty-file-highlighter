@@ -53,6 +53,11 @@
 						"🔹"
 					],
 					"description": "Choose the visual icon style for empty files in the Explorer tree."
+				},
+				"emptyFiles.whitespaceOnly": {
+					"type": "boolean",
+					"default": false,
+					"markdownDescription": "Also mark files that hold only whitespace: spaces, tabs, empty lines, a byte order mark. Files over 64 KiB are not read and never count."
 				}
 			}
 		}
