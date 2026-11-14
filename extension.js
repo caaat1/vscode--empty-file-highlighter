@@ -136,7 +136,8 @@ class EmptyFileDecorationProvider {
 			const emptiness = await emptinessOf(uri, stats.size, whitespaceOnlyEnabled());
 			if (emptiness === undefined) return undefined;
 
-			// Взимаме директно избрания символ (∅, 0B, ◎, 🔹) от менюто
+			// The badge picked under `emptyFiles.badgeStyle`, one of the
+			// choices its enum in package.json offers.
 			const selectedBadge = vscode.workspace.getConfiguration('emptyFiles').get('badgeStyle', '∅');
 			return badge(selectedBadge, fileTooltip(emptiness, stats.size));
 
