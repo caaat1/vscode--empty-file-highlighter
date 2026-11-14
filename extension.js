@@ -67,16 +67,17 @@ class EmptyFileDecorationProvider {
 		const events = [...this._pending.values()];
 		this._pending.clear();
 
-		const uris = events.map(event => event.uri);
+		// Keyed by URI string: files in one folder name that folder once.
+		const uris = new Map(events.map(event => [event.uri.toString(), event.uri]));
 		if (foldersEnabled()) {
 			const folders = await Promise.all(events.map(event =>
 				this._index.update(event.uri, event.created).catch(error => {
 					logError(error);
 					return [];
 				})));
-			uris.push(...folders.flat());
+			for (const folder of folders.flat()) uris.set(folder.toString(), folder);
 		}
-		this.refresh(uris);
+		this.refresh([...uris.values()]);
 	}
 
 	/**
