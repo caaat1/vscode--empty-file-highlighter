@@ -113,9 +113,8 @@ class EmptyFileDecorationProvider {
 				decoration.propagate = false;
 				decoration.badge = selectedBadge;
 				decoration.tooltip = tooltip;
-
-				// Ползваме блед, интелигентен цвят, който стои добре с всички символи
-				decoration.color = new vscode.ThemeColor('descriptionForeground');
+				// No colour: VS Code shows one colour per item, so ours would
+				// either cover Git's (an untracked file's green) or be covered.
 
 				return decoration;
 			}
