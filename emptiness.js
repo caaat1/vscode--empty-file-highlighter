@@ -47,4 +47,4 @@ async function emptinessOf(uri, size, whitespaceOnly) {
 	return isWhitespaceOnly(text) ? 'whitespace' : undefined;
 }
 
-module.exports = { emptinessOf };
+module.exports = { WHITESPACE_SCAN_MAX_BYTES, emptinessOf };

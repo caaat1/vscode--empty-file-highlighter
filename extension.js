@@ -184,6 +184,7 @@ function activate(context) {
 function deactivate() { }
 
 module.exports = {
+	BATCH_DELAY_MS,
 	activate,
 	deactivate
 };
