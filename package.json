@@ -1,50 +1,22 @@
 {
-	"name": "empty-file-highlighter",
-	"displayName": "Empty File Highlighter",
-	"description": "Highlights empty files in the explorer sidebar",
-	"version": "0.0.4",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/caaat1/vscode--empty-file-highlighter.git"
-	},
-	"publisher": "TeodorDaraktchiev",
-	"icon": "icon.png",
-	"engines": {
-		"vscode": "^1.80.0"
-	},
-	"categories": [
-		"Other"
-	],
-	"keywords": [
-		"empty",
-		"file size",
-		"explorer",
-		"highlighter"
-	],
 	"activationEvents": [
 		"onStartupFinished"
 	],
-	"main": "./extension.js",
 	"capabilities": {
 		"untrustedWorkspaces": {
 			"supported": true
 		},
 		"virtualWorkspaces": true
 	},
+	"categories": [
+		"Other"
+	],
 	"contributes": {
-		"decorations": [
-			{
-				"id": "empty-file-highlighter.decorator",
-				"label": "Empty Files Highlighter"
-			}
-		],
 		"configuration": {
-			"title": "Empty Files Highlighter",
 			"properties": {
 				"emptyFiles.badgeStyle": {
-					"type": "string",
 					"default": "∅",
+					"description": "Choose the visual icon style for empty files in the Explorer tree.",
 					"enum": [
 						"∅",
 						"0B",
@@ -52,32 +24,60 @@
 						"◎",
 						"🔹"
 					],
-					"description": "Choose the visual icon style for empty files in the Explorer tree."
-				},
-				"emptyFiles.whitespaceOnly": {
-					"type": "boolean",
-					"default": false,
-					"markdownDescription": "Also mark files that hold only whitespace: spaces, tabs, empty lines, a byte order mark. Files over 64 KiB are not read and never count."
+					"type": "string"
 				},
 				"emptyFiles.folders": {
-					"type": "boolean",
 					"default": true,
-					"markdownDescription": "Mark folders that hold empty files, at any depth, with `∋`; the tooltip gives the count. Paths in `#files.exclude#` and `#search.exclude#` are not counted. The workspace is scanned once at startup: turn this off if that is slow on a very large one."
+					"markdownDescription": "Mark folders that hold empty files, at any depth, with `∋`; the tooltip gives the count. Paths in `#files.exclude#` and `#search.exclude#` are not counted. The workspace is scanned once at startup: turn this off if that is slow on a very large one.",
+					"type": "boolean"
+				},
+				"emptyFiles.whitespaceOnly": {
+					"default": false,
+					"markdownDescription": "Also mark files that hold only whitespace: spaces, tabs, empty lines, a byte order mark. Files over 64 KiB are not read and never count.",
+					"type": "boolean"
 				}
+			},
+			"title": "Empty Files Highlighter"
+		},
+		"decorations": [
+			{
+				"id": "empty-file-highlighter.decorator",
+				"label": "Empty Files Highlighter"
 			}
-		}
+		]
+	},
+	"description": "Highlights empty files in the explorer sidebar",
+	"devDependencies": {
+		"@types/mocha": "^10.0.10",
+		"@types/node": "22.x",
+		"@types/vscode": "^1.80.0",
+		"@vscode/test-cli": "^0.0.12",
+		"@vscode/test-electron": "^2.5.2",
+		"eslint": "^9.39.3"
+	},
+	"displayName": "Empty File Highlighter",
+	"engines": {
+		"vscode": "^1.80.0"
+	},
+	"icon": "icon.png",
+	"keywords": [
+		"empty",
+		"file size",
+		"explorer",
+		"highlighter"
+	],
+	"license": "MIT",
+	"main": "./extension.js",
+	"name": "empty-file-highlighter",
+	"publisher": "TeodorDaraktchiev",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/caaat1/vscode--empty-file-highlighter.git"
 	},
 	"scripts": {
 		"lint": "eslint .",
 		"pretest": "npm run lint",
 		"test": "vscode-test"
 	},
-	"devDependencies": {
-		"@types/vscode": "^1.80.0",
-		"@types/mocha": "^10.0.10",
-		"@types/node": "22.x",
-		"eslint": "^9.39.3",
-		"@vscode/test-cli": "^0.0.12",
-		"@vscode/test-electron": "^2.5.2"
-	}
+	"version": "0.0.4"
 }
