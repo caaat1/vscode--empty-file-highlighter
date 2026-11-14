@@ -1,3 +1,5 @@
 .gitignore
 .vscodeignore
 *.vsix
+*.test.js
+test/**
