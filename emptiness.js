@@ -35,15 +35,6 @@ function isWhitespaceOnly(text) {
 }
 
 /**
- * Whether `emptyFiles.whitespaceOnly` is on. Only a real `true` turns it
- * on: a mistyped string such as "off" is truthy, but VS Code does not
- * coerce it and only warns.
- */
-function whitespaceOnlyEnabled() {
-	return vscode.workspace.getConfiguration('emptyFiles').get('whitespaceOnly', false) === true;
-}
-
-/**
  * How a file of the given size counts as empty: `'empty'` at 0 bytes,
  * `'whitespace'` when it holds only whitespace and `whitespaceOnly` is
  * true (files up to WHITESPACE_SCAN_MAX_BYTES), else undefined.
@@ -56,4 +47,4 @@ async function emptinessOf(uri, size, whitespaceOnly) {
 	return isWhitespaceOnly(text) ? 'whitespace' : undefined;
 }
 
-module.exports = { emptinessOf, whitespaceOnlyEnabled };
+module.exports = { emptinessOf };

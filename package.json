@@ -58,6 +58,11 @@
 					"type": "boolean",
 					"default": false,
 					"markdownDescription": "Also mark files that hold only whitespace: spaces, tabs, empty lines, a byte order mark. Files over 64 KiB are not read and never count."
+				},
+				"emptyFiles.folders": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "Mark folders that hold empty files, at any depth, with `∋`; the tooltip gives the count. Paths in `#files.exclude#` and `#search.exclude#` are not counted. The workspace is scanned once at startup: turn this off if that is slow on a very large one."
 				}
 			}
 		}

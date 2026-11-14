@@ -6,6 +6,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [0.0.4]
 
+- Folder marks: a folder holding empty files, at any depth, shows `∋`, even while collapsed; the tooltip gives the count. Paths in `files.exclude` and `search.exclude` are skipped. Option `emptyFiles.folders` (on by default).
+- Badges no longer tint the file name: Git's colours stay visible on empty files.
 - New option `emptyFiles.whitespaceOnly` (off by default): also mark files holding only whitespace, such as a single empty line (files up to 64 KiB).
 - Works in Restricted Mode: badges show before the workspace is trusted.
 - Declares support for virtual workspaces (tested with GitHub Repositories).
