@@ -25,8 +25,11 @@ function folderTooltip(count) {
 }
 
 /**
- * A badge without colour: an item shows one colour, so ours would either
- * cover Git's (an untracked file's green) or be covered by it.
+ * A badge without colour. An item shows one colour: the first among its
+ * decorations, newest provider first (VS Code's DecorationsService). Git
+ * registers a provider as it opens each repository, so a colour of ours
+ * would win or lose by timing, and could hide Git's green or yellow on an
+ * empty file. A grey would also read as Git's dimming of ignored files.
  */
 function badge(text, tooltip) {
 	const decoration = new vscode.FileDecoration(text, tooltip);

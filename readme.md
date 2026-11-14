@@ -5,7 +5,7 @@ Easily identify empty files directly inside Visual Studio Code’s Explorer view
 ## ⚡ Key Features
 * **Instant Visual Indicator** — Places a clear status badge next to any file with a size of 0 Bytes.
 * **Folder Marks** — A folder holding empty files, at any depth, shows `∋` ("contains"), even while collapsed; its tooltip gives the count.
-* **Leaves Colours Alone** — Badges only: Git's colours (and any other extension's) stay as they are.
+* **Leaves Colours Alone** — Badges only: Git's colours (and any other extension's) stay as they are, and an empty file never looks git-ignored.
 * **Native Integration** — Works seamlessly with your existing VS Code themes and file system.
 * **Bypasses Git Overrides** — Designed to stay visible even when new or untracked files turn green from Git.
 
