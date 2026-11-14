@@ -47,7 +47,10 @@ describe('extension', () => {
 		for (const disposable of context?.subscriptions ?? []) disposable.dispose();
 		context = undefined;
 		mock.timers.reset();
+		mock.restoreAll();
 	});
+
+	const linesOf = level => fake.channels[0].lines.filter(line => line.level === level);
 
 	describe('activation', () => {
 		it('registers one provider; disposing the context releases all it set up', async () => {
@@ -61,6 +64,7 @@ describe('extension', () => {
 			assert.equal(fake.providers.length, 0);
 			assert.equal(fake.watchers.length, 0);
 			assert.equal(fake.listenerCount, 0);
+			assert.equal(fake.channels.length, 0);
 		});
 
 		it('watches every file of the workspace', async () => {
@@ -213,6 +217,45 @@ describe('extension', () => {
 			fake.remove('/ws/a/b');
 			await afterEvents(provider, [['delete', '/ws/a/b']]);
 			assert.equal(await decorationOf(provider, '/ws/a'), undefined);
+		});
+	});
+
+	describe('logging', () => {
+		it("logs to an Output channel of the extension's display name", async () => {
+			await start();
+			assert.equal(fake.channels.length, 1);
+			assert.equal(fake.channels[0].name, manifest.displayName);
+			assert.equal(fake.channels[0].options.log, true);
+		});
+
+		it('logs what the folder scan found', async () => {
+			fake.file('/ws/a/one.txt');
+			fake.file('/ws/a/two.txt');
+			fake.file('/ws/full.txt', 'text');
+			await start();
+			const [line] = linesOf('info');
+			assert.match(line.value, /^Folder marks: 2 empty files among 3 scanned, in \d+ ms\.$/);
+		});
+
+		it('logs no scan with folder marks off', async () => {
+			fake.set({ 'emptyFiles.folders': false });
+			await start();
+			assert.deepEqual(linesOf('info'), []);
+		});
+
+		it('logs a file system error to the channel, not the console', async () => {
+			const consoleError = mock.method(console, 'error', () => {});
+			const { provider } = await start();
+			fake.fail('/ws/locked.txt', 'NoPermissions');
+			assert.equal(await decorationOf(provider, '/ws/locked.txt'), undefined);
+			assert.deepEqual(linesOf('error').map(line => line.value.code), ['NoPermissions']);
+			assert.equal(consoleError.mock.callCount(), 0);
+		});
+
+		it('takes a file gone before it is asked about as no error', async () => {
+			const { provider } = await start();
+			await decorationOf(provider, '/ws/gone.txt');
+			assert.deepEqual(linesOf('error'), []);
 		});
 	});
 

@@ -38,7 +38,9 @@ function badge(text, tooltip) {
 }
 
 class EmptyFileDecorationProvider {
-	constructor() {
+	/** @param log The extension's Output channel (a `LogOutputChannel`). */
+	constructor(log) {
+		this._log = log;
 		this._onDidChangeFileDecorations = new vscode.EventEmitter();
 		this.onDidChangeFileDecorations = this._onDidChangeFileDecorations.event;
 		/** URI string → { uri, created } of the events not yet reported. */
@@ -59,7 +61,7 @@ class EmptyFileDecorationProvider {
 		clearTimeout(this._timer);
 		this._timer = setTimeout(() => {
 			this._timer = undefined;
-			this._flush().catch(logError);
+			this._flush().catch(error => this._log.error(error));
 		}, BATCH_DELAY_MS);
 	}
 
@@ -72,7 +74,7 @@ class EmptyFileDecorationProvider {
 		if (foldersEnabled()) {
 			const folders = await Promise.all(events.map(event =>
 				this._index.update(event.uri, event.created).catch(error => {
-					logError(error);
+					this._log.error(error);
 					return [];
 				})));
 			for (const folder of folders.flat()) uris.set(folder.toString(), folder);
@@ -82,11 +84,21 @@ class EmptyFileDecorationProvider {
 
 	/**
 	 * Scans the workspace for the folder marks afresh, or drops them when
-	 * `emptyFiles.folders` is off, then refreshes every decoration.
+	 * `emptyFiles.folders` is off, then refreshes every decoration. Logs
+	 * what a scan found and how long it took: the measure for turning the
+	 * marks off on a workspace too large.
 	 */
 	async rebuildIndex() {
-		if (foldersEnabled()) await this._index.rebuild(whitespaceOnlyEnabled());
-		else this._index.clear();
+		if (foldersEnabled()) {
+			const started = Date.now();
+			const scan = await this._index.rebuild(whitespaceOnlyEnabled());
+			if (scan !== undefined) {
+				const noun = scan.empty === 1 ? 'file' : 'files';
+				this._log.info(`Folder marks: ${scan.empty} empty ${noun} among ${scan.scanned} scanned, in ${Date.now() - started} ms.`);
+			}
+		} else {
+			this._index.clear();
+		}
 		this.refresh();
 	}
 
@@ -133,24 +145,23 @@ class EmptyFileDecorationProvider {
 			if (error instanceof vscode.FileSystemError && error.code === 'FileNotFound') {
 				return undefined;
 			}
-			logError(error);
+			this._log.error(error);
 			return undefined;
 		}
 	}
-}
-
-function logError(error) {
-	console.error(`[Empty Files Highlighter Error] ${error.message}`);
 }
 
 /** Settings whose change alters which files the folder index counts. */
 const INDEX_SETTINGS = ['emptyFiles.folders', 'emptyFiles.whitespaceOnly', 'files.exclude', 'search.exclude'];
 
 function activate(context) {
-	const provider = new EmptyFileDecorationProvider();
+	// Output → Empty File Highlighter: errors, and what each folder scan found.
+	const log = vscode.window.createOutputChannel(context.extension.packageJSON.displayName, { log: true });
+	const logError = error => log.error(error);
+	const provider = new EmptyFileDecorationProvider(log);
 
 	const registration = vscode.window.registerFileDecorationProvider(provider);
-	context.subscriptions.push(registration, provider);
+	context.subscriptions.push(log, registration, provider);
 
 	// Ends with a full refresh, folder marks on or off.
 	provider.rebuildIndex().catch(logError);

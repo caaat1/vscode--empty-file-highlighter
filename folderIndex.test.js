@@ -83,6 +83,10 @@ describe('EmptyFileIndex', () => {
 			assert.deepEqual(countsOf(index, ['/ws', '/other']), { '/ws': 4, '/other': 1 });
 		});
 
+		it('resolves with the empty and the scanned files, excluded ones not among them', async () => {
+			assert.deepEqual(await index.rebuild(false), { empty: 4, scanned: 7 });
+		});
+
 		it('starts afresh', async () => {
 			await index.rebuild(false);
 			fake.remove('/ws/src');
@@ -141,10 +145,10 @@ describe('EmptyFileIndex', () => {
 		});
 	});
 
-	it('clear: forgets every count and stops a scan under way', async () => {
+	it('clear: forgets every count and stops a scan under way, which reports nothing', async () => {
 		const scan = index.rebuild(false);
 		index.clear();
-		await scan;
+		assert.equal(await scan, undefined);
 		assert.equal(index.countUnder(fake.uri('/ws')), 0);
 	});
 });

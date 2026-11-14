@@ -8,6 +8,7 @@
 const { registerHooks } = require('node:module');
 const { posix } = require('node:path');
 const { pathToFileURL } = require('node:url');
+const manifest = require('../package.json');
 
 registerHooks({
 	resolve(specifier, context, nextResolve) {
@@ -180,6 +181,16 @@ const workspace = {
 };
 
 const window = {
+	/** A log channel keeping its lines as `{ level, value }`. */
+	createOutputChannel(name, options) {
+		const channel = { lines: [], name, options };
+		for (const level of ['trace', 'debug', 'info', 'warn', 'error']) {
+			channel[level] = value => channel.lines.push({ level, value });
+		}
+		channel.dispose = () => state.channels.delete(channel);
+		state.channels.add(channel);
+		return channel;
+	},
 	registerFileDecorationProvider: provider => subscribe(state.providers, provider),
 };
 
@@ -191,6 +202,7 @@ const fake = {
 		state.failures = new Map();
 		state.settings = new Map();
 		state.folders = [];
+		state.channels = new Set();
 		state.providers = new Set();
 		state.watchers = new Set();
 		state.configurationListeners = new Set();
@@ -275,9 +287,12 @@ const fake = {
 		});
 	},
 
-	/** An extension context whose subscriptions the test disposes. */
-	context: () => ({ subscriptions: [] }),
+	/** An extension context, of this extension's manifest; the test disposes its subscriptions. */
+	context: () => ({ extension: { packageJSON: manifest }, subscriptions: [] }),
 
+	get channels() {
+		return [...state.channels];
+	},
 	get counts() {
 		return { ...state.counts };
 	},

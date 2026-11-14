@@ -56,6 +56,8 @@ class EmptyFileIndex {
 		this._generation = 0;
 		this._isExcluded = () => false;
 		this._whitespaceOnly = false;
+		/** Files looked at since the last rebuild began. */
+		this._scanned = 0;
 	}
 
 	/** The number of empty files anywhere below the folder. */
@@ -71,16 +73,21 @@ class EmptyFileIndex {
 
 	/**
 	 * Scans every workspace folder afresh. Reads the exclude settings and
-	 * `whitespaceOnly` once, so a change to them needs a rebuild.
+	 * `whitespaceOnly` once, so a change to them needs a rebuild. Resolves
+	 * with what it found, `{ empty, scanned }` files, or undefined when
+	 * cleared or rebuilt again meanwhile.
 	 */
 	async rebuild(whitespaceOnly) {
 		this.clear();
 		const generation = this._generation;
 		this._isExcluded = excludeMatcher();
 		this._whitespaceOnly = whitespaceOnly;
+		this._scanned = 0;
 		for (const folder of vscode.workspace.workspaceFolders ?? []) {
 			await this._scan(folder.uri, generation, new Map());
 		}
+		if (generation !== this._generation) return undefined;
+		return { empty: this._files.size, scanned: this._scanned };
 	}
 
 	/**
@@ -142,6 +149,7 @@ class EmptyFileIndex {
 				return;
 			}
 			if ((type & vscode.FileType.File) === 0) return;
+			this._scanned++;
 
 			try {
 				const stats = await vscode.workspace.fs.stat(child);
