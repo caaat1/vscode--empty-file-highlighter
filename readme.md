@@ -29,4 +29,4 @@ Folder marks (**Folders**, `emptyFiles.folders`, on by default) count what the E
 * Works in untrusted (Restricted Mode), remote (WSL) and virtual (GitHub Repositories) workspaces
 
 ## 🐛 Known Issues
-* No known issues so far. Counting on you for the unknowns!
+* A folder that also holds Git changes or problems (errors, warnings) below it shows VS Code's own faded dot, "Contains emphasized items", instead of `∋`: VS Code replaces every badge of such a folder with it. The empty files inside still show their own badge. Counting on you for the unknowns!
