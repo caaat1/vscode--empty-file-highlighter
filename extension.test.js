@@ -74,6 +74,15 @@ describe('extension', () => {
 			assert.equal(refreshed, undefined);
 			assert.equal((await decorationOf(provider, '/ws/sub')).badge, '∋');
 		});
+
+		it('refreshes nothing more until something changes', async () => {
+			const { provider } = await start();
+			let refreshes = 0;
+			provider.onDidChangeFileDecorations(() => refreshes++);
+			mock.timers.tick(60_000);
+			await new Promise(setImmediate);
+			assert.equal(refreshes, 0);
+		});
 	});
 
 	describe('file badges', () => {

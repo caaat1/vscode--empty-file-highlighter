@@ -154,9 +154,7 @@ function activate(context) {
 	const registration = vscode.window.registerFileDecorationProvider(provider);
 	context.subscriptions.push(registration, provider);
 
-	setTimeout(() => {
-		provider.refresh();
-	}, 800);
+	// Ends with a full refresh, folder marks on or off.
 	provider.rebuildIndex().catch(logError);
 
 	const settingsListener = vscode.workspace.onDidChangeConfiguration(event => {
