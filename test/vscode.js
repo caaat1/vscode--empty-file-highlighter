@@ -110,6 +110,21 @@ function entryAt(uri) {
 	return entry;
 }
 
+/**
+ * Runs a file system call as one in flight until it settles, after one
+ * turn of the event loop's microtasks, so overlapping calls can be counted.
+ */
+async function inFlight(call) {
+	state.counts.inFlight++;
+	state.counts.maxInFlight = Math.max(state.counts.maxInFlight, state.counts.inFlight);
+	try {
+		await null;
+		return call();
+	} finally {
+		state.counts.inFlight--;
+	}
+}
+
 function folderOf(uri) {
 	return state.folders.find(folder =>
 		folder.uri.scheme === uri.scheme
@@ -158,16 +173,21 @@ const workspace = {
 	},
 	fs: {
 		isWritableFileSystem: scheme => (scheme === 'file' ? true : undefined),
-		async stat(uri) {
+		stat(uri) {
 			state.counts.stat++;
-			const entry = entryAt(uri);
-			return { ctime: 0, mtime: 0, size: entry.bytes?.length ?? 0, type: entry.type };
+			for (const listener of [...state.statListeners]) listener(uri.path);
+			return inFlight(() => {
+				const entry = entryAt(uri);
+				return { ctime: 0, mtime: 0, size: entry.bytes?.length ?? 0, type: entry.type };
+			});
 		},
-		async readFile(uri) {
+		readFile(uri) {
 			state.counts.readFile++;
-			const entry = entryAt(uri);
-			if ((entry.type & FileType.File) === 0) throw new FileSystemError(`Not a file: ${uri}`, 'FileIsADirectory');
-			return entry.bytes;
+			return inFlight(() => {
+				const entry = entryAt(uri);
+				if ((entry.type & FileType.File) === 0) throw new FileSystemError(`Not a file: ${uri}`, 'FileIsADirectory');
+				return entry.bytes;
+			});
 		},
 		async readDirectory(uri) {
 			state.counts.readDirectory++;
@@ -207,7 +227,8 @@ const fake = {
 		state.watchers = new Set();
 		state.configurationListeners = new Set();
 		state.folderListeners = new Set();
-		state.counts = { readDirectory: 0, readFile: 0, stat: 0 };
+		state.statListeners = new Set();
+		state.counts = { inFlight: 0, maxInFlight: 0, readDirectory: 0, readFile: 0, stat: 0 };
 		fake.setFolders(['/ws']);
 	},
 
@@ -233,6 +254,9 @@ const fake = {
 			if (key === path || key.startsWith(`${path}/`)) state.entries.delete(key);
 		}
 	},
+
+	/** Calls the listener with the path of every stat, as it starts. */
+	onStat: listener => subscribe(state.statListeners, listener),
 
 	/** Makes every file system call on the path fail with the given code. */
 	fail(path, code) {

@@ -9,6 +9,22 @@ const { emptinessOf } = require('./emptiness');
 const { globToRegExp } = require('./glob');
 
 /**
+ * Files of a folder looked at at once. Unbounded, a folder of many files
+ * would have each of them stat'ed, and with `whitespaceOnly` read, at the
+ * same time.
+ */
+const SCAN_CONCURRENCY = 16;
+
+/** Runs `task` on every item, at most `limit` at a time. */
+async function forEachLimited(items, limit, task) {
+	let next = 0;
+	const worker = async () => {
+		while (next < items.length) await task(items[next++]);
+	};
+	await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+}
+
+/**
  * Tells whether a workspace-relative path is excluded by `files.exclude`
  * (what the Explorer hides) or `search.exclude` (contents not worth
  * searching, `node_modules` by default). A pattern set to a `when` clause
@@ -139,7 +155,9 @@ class EmptyFileIndex {
 		if (generation !== this._generation) return;
 
 		const subfolders = [];
-		await Promise.all(entries.map(async ([name, type]) => {
+		await forEachLimited(entries, SCAN_CONCURRENCY, async ([name, type]) => {
+			// Superseded: the rest of the folder is not looked at.
+			if (generation !== this._generation) return;
 			const child = vscode.Uri.joinPath(folderUri, name);
 			if (this._isExcluded(vscode.workspace.asRelativePath(child, false))) return;
 
@@ -160,7 +178,7 @@ class EmptyFileIndex {
 			} catch {
 				// Gone or unreadable since listed: not counted.
 			}
-		}));
+		});
 
 		for (const subfolder of subfolders) {
 			if (generation !== this._generation) return;
@@ -203,4 +221,4 @@ class EmptyFileIndex {
 	}
 }
 
-module.exports = { EmptyFileIndex };
+module.exports = { EmptyFileIndex, SCAN_CONCURRENCY };

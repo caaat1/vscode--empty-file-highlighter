@@ -2,7 +2,7 @@ const { beforeEach, describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 // The fake first: it makes the `require('vscode')` below resolve to it.
 const { fake } = require('./test/vscode');
-const { EmptyFileIndex } = require('./folderIndex');
+const { EmptyFileIndex, SCAN_CONCURRENCY } = require('./folderIndex');
 
 /** The workspace most tests start from; `/ws` holds 4 empty files. */
 function standardWorkspace() {
@@ -87,6 +87,14 @@ describe('EmptyFileIndex', () => {
 			assert.deepEqual(await index.rebuild(false), { empty: 4, scanned: 7 });
 		});
 
+		it('looks at no more files at once than SCAN_CONCURRENCY, reading included', async () => {
+			for (let i = 0; i < 10 * SCAN_CONCURRENCY; i++) fake.file(`/ws/many/${i}.txt`, ' ');
+			await index.rebuild(true);
+			assert.equal(index.countUnder(fake.uri('/ws/many')), 10 * SCAN_CONCURRENCY);
+			assert.ok(fake.counts.maxInFlight <= SCAN_CONCURRENCY, `${fake.counts.maxInFlight} at once`);
+			assert.ok(fake.counts.maxInFlight > 1, 'yet more than one');
+		});
+
 		it('starts afresh', async () => {
 			await index.rebuild(false);
 			fake.remove('/ws/src');
@@ -150,5 +158,17 @@ describe('EmptyFileIndex', () => {
 		index.clear();
 		assert.equal(await scan, undefined);
 		assert.equal(index.countUnder(fake.uri('/ws')), 0);
+	});
+
+	it('clear: a scan under way looks at no further file', async () => {
+		for (let i = 0; i < 10 * SCAN_CONCURRENCY; i++) fake.file(`/ws/many/${i}.txt`);
+		let statted = 0;
+		// Cleared at the scan's first look into the big folder.
+		fake.onStat(path => {
+			if (!path.startsWith('/ws/many/')) return;
+			if (statted++ === 0) index.clear();
+		});
+		await index.rebuild(false);
+		assert.ok(statted <= SCAN_CONCURRENCY, `${statted} statted after the clear`);
 	});
 });
