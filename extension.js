@@ -78,7 +78,9 @@ class EmptyFileDecorationProvider {
 	async emptinessTooltip(uri, size, config) {
 		if (size === 0) return 'This file is completely empty (0 Bytes).';
 
-		if (!config.get('whitespaceOnly', false)) return undefined;
+		// Only a real `true` turns the option on: a mistyped string such as
+		// "off" is truthy, but VS Code does not coerce it and only warns.
+		if (config.get('whitespaceOnly', false) !== true) return undefined;
 		if (size > WHITESPACE_SCAN_MAX_BYTES) return undefined;
 
 		const text = decodeText(await vscode.workspace.fs.readFile(uri));
