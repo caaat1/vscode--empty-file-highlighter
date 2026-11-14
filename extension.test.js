@@ -220,6 +220,12 @@ describe('extension', () => {
 		});
 	});
 
+	describe('manifest', () => {
+		it('titles the settings with the display name: they sit right under its heading', () => {
+			assert.equal(manifest.contributes.configuration.title, manifest.displayName);
+		});
+	});
+
 	describe('logging', () => {
 		it("logs to an Output channel of the extension's display name", async () => {
 			await start();

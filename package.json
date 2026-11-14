@@ -37,7 +37,7 @@
 					"type": "boolean"
 				}
 			},
-			"title": "Empty Files Highlighter"
+			"title": "Empty File Highlighter"
 		}
 	},
 	"description": "Highlights empty files in the explorer sidebar",
