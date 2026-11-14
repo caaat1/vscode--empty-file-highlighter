@@ -243,6 +243,13 @@ describe('extension', () => {
 			assert.match(line.value, /^Folder marks: 2 empty files among 3 scanned, in \d+ ms\.$/);
 		});
 
+		it('logs a single empty file in the singular', async () => {
+			fake.file('/ws/one.txt');
+			await start();
+			const [line] = linesOf('info');
+			assert.match(line.value, /^Folder marks: 1 empty file among 1 scanned, in \d+ ms\.$/);
+		});
+
 		it('logs no scan with folder marks off', async () => {
 			fake.set({ 'emptyFiles.folders': false });
 			await start();
