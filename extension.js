@@ -149,8 +149,6 @@ const INDEX_SETTINGS = ['emptyFiles.folders', 'emptyFiles.whitespaceOnly', 'file
 function activate(context) {
 	const provider = new EmptyFileDecorationProvider();
 
-	console.log('✅ [Empty File Highlighter] Extension is now active!');
-
 	const registration = vscode.window.registerFileDecorationProvider(provider);
 	context.subscriptions.push(registration, provider);
 
