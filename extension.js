@@ -1,35 +1,13 @@
 const vscode = require('vscode');
+const { emptinessOf, whitespaceOnlyEnabled } = require('./emptiness');
 
 const BATCH_DELAY_MS = 100;
 
-/**
- * Largest file read for the `emptyFiles.whitespaceOnly` check. A file over
- * it is not read: one that large holding only whitespace is rare, and
- * reading every big file on each Explorer refresh is not.
- */
-const WHITESPACE_SCAN_MAX_BYTES = 64 * 1024;
-
-/**
- * Decodes file bytes for the whitespace check: UTF-16 when a byte order
- * mark says so, UTF-8 otherwise. Bytes that are not valid UTF-8 decode to
- * U+FFFD, which is no whitespace, so such a file never counts.
- */
-function decodeText(bytes) {
-	if (bytes[0] === 0xff && bytes[1] === 0xfe) {
-		return new TextDecoder('utf-16le').decode(bytes);
-	}
-	if (bytes[0] === 0xfe && bytes[1] === 0xff) {
-		return new TextDecoder('utf-16be').decode(bytes);
-	}
-	return new TextDecoder('utf-8').decode(bytes);
-}
-
-/**
- * `\s` covers spaces, tabs, line breaks (LF, CR), form and vertical feeds,
- * no-break and other Unicode spaces, and the byte order mark (U+FEFF).
- */
-function isWhitespaceOnly(text) {
-	return /^\s*$/u.test(text);
+/** The badge's tooltip for an empty file, by how it counts as empty. */
+function fileTooltip(emptiness, size) {
+	if (emptiness === 'empty') return 'This file is completely empty (0 Bytes).';
+	const unit = size === 1 ? 'Byte' : 'Bytes';
+	return `This file holds only whitespace (${size} ${unit}).`;
 }
 
 class EmptyFileDecorationProvider {
@@ -70,26 +48,6 @@ class EmptyFileDecorationProvider {
 		this._onDidChangeFileDecorations.fire(uris);
 	}
 
-	/**
-	 * The badge's tooltip when the file counts as empty, else undefined: a
-	 * 0-byte file always counts; one holding only whitespace counts when
-	 * `emptyFiles.whitespaceOnly` is on and it is small enough to read.
-	 */
-	async emptinessTooltip(uri, size, config) {
-		if (size === 0) return 'This file is completely empty (0 Bytes).';
-
-		// Only a real `true` turns the option on: a mistyped string such as
-		// "off" is truthy, but VS Code does not coerce it and only warns.
-		if (config.get('whitespaceOnly', false) !== true) return undefined;
-		if (size > WHITESPACE_SCAN_MAX_BYTES) return undefined;
-
-		const text = decodeText(await vscode.workspace.fs.readFile(uri));
-		if (!isWhitespaceOnly(text)) return undefined;
-
-		const unit = size === 1 ? 'Byte' : 'Bytes';
-		return `This file holds only whitespace (${size} ${unit}).`;
-	}
-
 	async provideFileDecoration(uri) {
 		// Decorations are asked for every URI VS Code shows (Git diffs,
 		// untitled editors, output channels…); stat only those with a file
@@ -102,17 +60,17 @@ class EmptyFileDecorationProvider {
 			const stats = await vscode.workspace.fs.stat(uri);
 			if ((stats.type & vscode.FileType.File) === 0) return undefined;
 
-			const config = vscode.workspace.getConfiguration('emptyFiles');
-			const tooltip = await this.emptinessTooltip(uri, stats.size, config);
+			const emptiness = await emptinessOf(uri, stats.size, whitespaceOnlyEnabled());
 
-			if (tooltip !== undefined) {
+			if (emptiness !== undefined) {
+				const config = vscode.workspace.getConfiguration('emptyFiles');
 				// Взимаме директно избрания символ (∅, 0B, ◎, 🔹) от менюто
 				const selectedBadge = config.get('badgeStyle', '∅');
 
 				const decoration = new vscode.FileDecoration();
 				decoration.propagate = false;
 				decoration.badge = selectedBadge;
-				decoration.tooltip = tooltip;
+				decoration.tooltip = fileTooltip(emptiness, stats.size);
 				// No colour: VS Code shows one colour per item, so ours would
 				// either cover Git's (an untracked file's green) or be covered.
 
